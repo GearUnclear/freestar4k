@@ -217,7 +217,9 @@ except ModuleNotFoundError:
     exit(1)
 os.chdir(os.path.dirname(os.path.abspath(__file__))) #do this or everything explodes
 if not mute:
-    pg.mixer.init(audiorate, devicename=(adevice if adevice != "Default" else None))
+    #large buffer when broadcasting: the SDL dummy audio driver paces callbacks with integer-ms
+    #sleeps, so small buffers make the mixer run ~4% off real time; 8192 samples measures ~0.3% off
+    pg.mixer.init(audiorate, buffer=(8192 if outputs else 512), devicename=(adevice if adevice != "Default" else None))
 
 if outputs and not mute:
     from pygame._sdl2.mixer import set_post_mix
@@ -1883,7 +1885,7 @@ def setupstream(url):
     s = av.open(url, mode="w", format="flv")
     st = s.add_stream(vencoder, rate=framerate)
     if vencoder == "libx264":
-        st.options = {"preset": "veryfast"} #medium eats a full core at 30fps for no visible gain on this content
+        st.options = {"preset": "veryfast", "x264-params": "keyint=60:min-keyint=60:scenecut=0"} #veryfast: medium eats a full core at 30fps for no visible gain; fixed 2s GOP so HLS segments stay uniform (variable segment durations break iOS clients)
     at = None
     if not mute:
         at = s.add_stream("aac", rate=audiorate)
@@ -1957,25 +1959,38 @@ def dowrite():
     frame_start_evt.set()
     audio_ready_event.set()
     last_p = 0
+    last_vpts = -1
     while True:
         avevent.wait()
         avevent.clear()
-        
+
         if last_p == p_counter:
             avevent.clear()
             continue
         sdata = pg.surfarray.array3d(avbuffer).transpose([1, 0, 2])
         frame = av.VideoFrame.from_ndarray(sdata, format="rgb24")
         frame = frame.reformat(format="yuv420p")
-        frame.pts = frame_idx_actual
+        if not mute:
+            #slave video pts to the audio sample clock: the mixer paces slightly off wall time, and
+            #if the two timelines drift apart the HLS buffer develops gaps that stall browsers
+            vpts = round(audio_samples_sent * framerate / audiorate)
+            if vpts <= last_vpts:
+                vpts = last_vpts + 1
+        else:
+            vpts = frame_idx_actual
+        frame.pts = vpts
+        last_vpts = vpts
         frame.time_base = frac.Fraction(1, framerate)
         for out in outputs:
             framelists[out].append(frame)
         last_p = p_counter * 1
 
+audio_samples_sent = 0 #cumulative samples delivered by the mixer; this is the stream's master clock
 def dowriteaudio():
+    global audio_samples_sent
     if mute:
         return
+    #audio timestamps must be sample-accurate, not video-frame-quantized, or the HLS audio track gets gaps (Chrome MSE stalls, Safari drops audio)
     audio_ready_event.wait()
     while True:
         try:
@@ -1983,14 +1998,15 @@ def dowriteaudio():
         except:
             tm.sleep(0.01)
             continue
-        
-        
+
+
         n_int = len(buf) // 4
         af = av.AudioFrame(format="s16", layout="stereo", samples=n_int)
         af.sample_rate = audiorate
         af.planes[0].update(buf)
-        af.time_base = frac.Fraction(1, framerate)
-        af.pts = frame_idx_actual
+        af.time_base = frac.Fraction(1, audiorate)
+        af.pts = audio_samples_sent
+        audio_samples_sent += n_int
         for out in outputs:
             audlists[out].append(af)
 
