@@ -1042,11 +1042,19 @@ def getdata():
             tm.sleep(1)
 th.Thread(target=getdata, daemon=True).start()
 
+def scan_musicfiles():
+    files = []
+    try:
+        for file in os.listdir(musicpath):
+            if file.endswith((".mp3", ".wav", ".flac", ".xm", ".mod", ".ogg")) and not file.startswith("."):
+                files.append(os.path.join(musicpath, file))
+    except OSError:
+        pass
+    return files
+
 musicfiles = []
 if musicpath:
-    for file in os.listdir(musicpath):
-        if file.endswith((".mp3", ".wav", ".flac", ".xm", ".mod", ".ogg")) and not file.startswith("."):
-            musicfiles.append(os.path.join(musicpath, file))
+    musicfiles = scan_musicfiles()
 
 char_list = {}
 def frender(font, text, aa, color):
@@ -1727,6 +1735,7 @@ moon_fq = pg.image.load("moon/First-Quarter.gif").convert_alpha()
 moon_new = pg.image.load("moon/New-Moon.gif").convert_alpha()
 
 def domusic():
+    global musicfiles
     if mute:
         return
     mus = None
@@ -1737,8 +1746,12 @@ def domusic():
             musicon = False
         if musicon:
             if not musicch.get_busy():
+                musicfiles = scan_musicfiles() #rescan so tracks dropped in later play without a restart
+                if not musicfiles:
+                    tm.sleep(5)
+                    continue
                 allowed_this_time = musicfiles.copy()
-                if (len(musicfiles) > 1) and last:
+                if (len(musicfiles) > 1) and last and (last in allowed_this_time):
                     allowed_this_time.remove(last)
                 last = rd.choice(allowed_this_time)
                 mus = pg.mixer.Sound(last)
@@ -1869,6 +1882,8 @@ resetup = set() #if a url is in this list it will be set back up asap
 def setupstream(url):
     s = av.open(url, mode="w", format="flv")
     st = s.add_stream(vencoder, rate=framerate)
+    if vencoder == "libx264":
+        st.options = {"preset": "veryfast"} #medium eats a full core at 30fps for no visible gain on this content
     at = None
     if not mute:
         at = s.add_stream("aac", rate=audiorate)
@@ -1974,7 +1989,7 @@ def dowriteaudio():
         af = av.AudioFrame(format="s16", layout="stereo", samples=n_int)
         af.sample_rate = audiorate
         af.planes[0].update(buf)
-        af.time_base = frac.Fraction(1, 60)
+        af.time_base = frac.Fraction(1, framerate)
         af.pts = frame_idx_actual
         for out in outputs:
             audlists[out].append(af)
