@@ -1905,22 +1905,28 @@ def dowrite_th(strea : tuple, url):
     stream = tuple(strea)
     frame_start_evt.wait()
     while True:
-        if stream in resetup:
-            st = stream[3]
+        if url in resetup:
             try:
                 stream[0].close()
             except:
                 pass
-            stream = setupstream(st)
-            print(f"Reset stream {st[:20]}...")
-            resetup.remove(stream)
-        
+            while True: #keep retrying: the media server may be down for a while
+                try:
+                    stream = setupstream(url)
+                    break
+                except av.FFmpegError:
+                    tm.sleep(2)
+            framelists[url].clear() #drop the backlog so we rejoin at the live edge
+            audlists[url].clear()
+            resetup.discard(url)
+            print(f"Reset stream {url[:20]}...")
+
         if len(framelists[url]) > 0:
             frame = framelists[url].pop(0)
         else:
             tm.sleep(0.01)
             continue
-        
+
         if not mute:
             while len(audlists[url]) > 0:
                 try:
@@ -1930,13 +1936,13 @@ def dowrite_th(strea : tuple, url):
                 try:
                     for packet in stream[2].encode(af):
                         stream[0].mux(packet)
-                except (av.BrokenPipeError, av.EOFError):
+                except av.FFmpegError:
                     resetup.add(url)
-        
+
         try:
             for packet in stream[1].encode(frame):
                 stream[0].mux(packet)
-        except (av.BrokenPipeError, av.EOFError):
+        except av.FFmpegError:
             resetup.add(url)
         
         
@@ -1982,7 +1988,8 @@ def dowrite():
         last_vpts = vpts
         frame.time_base = frac.Fraction(1, framerate)
         for out in outputs:
-            framelists[out].append(frame)
+            if len(framelists[out]) < 300: #bound the backlog if a writer is stuck reconnecting
+                framelists[out].append(frame)
         last_p = p_counter * 1
 
 audio_samples_sent = 0 #cumulative samples delivered by the mixer; this is the stream's master clock
@@ -2008,7 +2015,8 @@ def dowriteaudio():
         af.pts = audio_samples_sent
         audio_samples_sent += n_int
         for out in outputs:
-            audlists[out].append(af)
+            if len(audlists[out]) < 300: #bound the backlog if a writer is stuck reconnecting
+                audlists[out].append(af)
 
 def postmix(dev, mem):
     audio_queue.put_nowait(bytes(mem))
