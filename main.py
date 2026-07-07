@@ -1973,17 +1973,21 @@ def dowrite():
         if last_p == p_counter:
             avevent.clear()
             continue
-        sdata = pg.surfarray.array3d(avbuffer).transpose([1, 0, 2])
-        frame = av.VideoFrame.from_ndarray(sdata, format="rgb24")
-        frame = frame.reformat(format="yuv420p")
         if not mute:
             #slave video pts to the audio sample clock: the mixer paces slightly off wall time, and
             #if the two timelines drift apart the HLS buffer develops gaps that stall browsers
             vpts = round(audio_samples_sent * framerate / audiorate)
             if vpts <= last_vpts:
-                vpts = last_vpts + 1
+                #the audio clock hasn't advanced a full frame yet: drop this frame. Bumping
+                #the pts instead (+1) lets video free-run at render pace and drift ahead of
+                #audio without bound - iOS AVPlayer then plays audio over a black picture
+                last_p = p_counter * 1
+                continue
         else:
             vpts = frame_idx_actual
+        sdata = pg.surfarray.array3d(avbuffer).transpose([1, 0, 2])
+        frame = av.VideoFrame.from_ndarray(sdata, format="rgb24")
+        frame = frame.reformat(format="yuv420p")
         frame.pts = vpts
         last_vpts = vpts
         frame.time_base = frac.Fraction(1, framerate)
