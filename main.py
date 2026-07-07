@@ -1882,8 +1882,6 @@ resetup = set() #if a url is in this list it will be set back up asap
 def setupstream(url):
     s = av.open(url, mode="w", format="flv")
     st = s.add_stream(vencoder, rate=framerate)
-    if vencoder == "libx264":
-        st.options = {"preset": "veryfast"} #medium eats a full core at 30fps for no visible gain on this content
     at = None
     if not mute:
         at = s.add_stream("aac", rate=audiorate)
