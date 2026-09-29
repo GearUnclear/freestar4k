@@ -216,6 +216,18 @@ except ModuleNotFoundError:
     print("Configuration not found! Try saving your configuration again.")
     exit(1)
 os.chdir(os.path.dirname(os.path.abspath(__file__))) #do this or everything explodes
+for source, target in (
+    *((f"{name}.ttf", f"fonts/{name}.ttf") for name in ("Compressed", "CompressedNums", "Extended", "Large", "Main", "Radar", "Small")),
+    ("jrfonts", "fonts/jrfonts"),
+    *((f"icons_{name}", f"icons/{name}") for name in ("cc", "reg", "xf")),
+    *((f"{name}.png", f"images/misc/{name}.png") for name in ("mwsicon", "regmap", "xfbg")),
+    ("noaa.gif", "images/misc/noaa.gif"),
+    *((f"{name}.png", f"images/radar/{name}.png") for name in ("radar", "radar99", "radarc", "radarc99")),
+    ("beep.ogg", "sounds/beep.ogg"),
+):
+    if os.path.exists(source) and not os.path.exists(target):
+        os.makedirs(os.path.dirname(target), exist_ok=True)
+        os.rename(source, target)
 if not mute:
     pg.mixer.init(audiorate, devicename=(adevice if adevice != "Default" else None))
 

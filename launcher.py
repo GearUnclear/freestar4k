@@ -119,7 +119,7 @@ def do_update(to_c):
         status = change["status"]
         filename = change["filename"]
 
-        if status in ("modified", "added"):
+        if status in ("modified", "added", "renamed"):
             download(change["url"], filename)
         elif status == "removed":
             if os.path.exists(filename):

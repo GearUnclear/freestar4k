@@ -90,7 +90,7 @@ def update(to_c):
         status = change["status"]
         filename = change["filename"]
 
-        if status in ("modified", "added"):
+        if status in ("modified", "added", "renamed"):
             print(f"Downloading {filename}")
             download(change["url"], filename)
 
