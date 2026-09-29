@@ -1,0 +1,16 @@
+{
+  "start": "2026-09-29T20:35:26.107Z",
+  "end": "2026-09-29T20:45:09.860Z",
+  "samples": 2335,
+  "full_black_samples": 0,
+  "max_black_fraction": 0.007604166666666667,
+  "low_ready_samples": 0,
+  "paused_samples": 0,
+  "offline_samples": 0,
+  "freezes_1s_or_longer": [],
+  "events": {
+    "stalled": 52
+  },
+  "total_video_frames": 3657,
+  "dropped_video_frames": 2
+}

@@ -1,0 +1,35 @@
+pygame-ce 2.5.7 (SDL 2.32.10, Python 3.12.3)
+Traceback (most recent call last):
+  File "/opt/FreeStar/main.py", line 794, in getdata
+    weather = json_data("https://wx.lewolfyt.cc/", sections=("current", "extended"),
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/FreeStar/weather_http.py", line 20, in json_data
+    data = response(url, **kwargs).json()
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/FreeStar/tests/smoke_renderer.py", line 57, in request
+    raise OSError('Injected weather refresh outage')
+OSError: Injected weather refresh outage
+
+Traceback (most recent call last):
+  File "/opt/FreeStar/main.py", line 794, in getdata
+    weather = json_data("https://wx.lewolfyt.cc/", sections=("current", "extended"),
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/FreeStar/weather_http.py", line 20, in json_data
+    data = response(url, **kwargs).json()
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/FreeStar/tests/smoke_renderer.py", line 57, in request
+    raise OSError('Injected weather refresh outage')
+OSError: Injected weather refresh outage
+
+Traceback (most recent call last):
+  File "/opt/FreeStar/main.py", line 794, in getdata
+    weather = json_data("https://wx.lewolfyt.cc/", sections=("current", "extended"),
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/FreeStar/weather_http.py", line 20, in json_data
+    data = response(url, **kwargs).json()
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/FreeStar/tests/smoke_renderer.py", line 57, in request
+    raise OSError('Injected weather refresh outage')
+OSError: Injected weather refresh outage
+
+Renderer passed: recovery ['al-0', 'cc-0', 'cr-0', 'df-0', 'df-1', 'df-2', 'lf-0', 'lf-1', 'lf-2', 'lo-0', 'lr-0', 'ol-0', 'tcf-0', 'ti-0', 'xf-0']

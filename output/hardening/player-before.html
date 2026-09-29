@@ -1,0 +1,124 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Seattle Weather</title>
+<link rel="icon" type="image/png" href="favicon.png">
+<style type="text/css">
+  body { font-family: Verdana, Arial, Helvetica, sans-serif; }
+  #rotatemsg { display: none; }
+  @media (orientation: portrait) and (max-width: 820px) {
+    #rotatemsg { display: block; }
+  }
+  #tv { width: 100%; max-height: 88vh; background: black; display: block; }
+  #tvwrap { position: relative; }
+  #tvwrap:fullscreen { background: black; }
+  #tvwrap:fullscreen #tv { width: 100%; height: 100%; max-height: none; }
+  #tvwrap:after {
+    content: '';
+    position: absolute;
+    top: 0; right: 0; bottom: 0; left: 0;
+    pointer-events: none;
+    background: repeating-linear-gradient(
+      to bottom,
+      rgba(0,0,0,0) 0px, rgba(0,0,0,0) 2px,
+      rgba(0,0,0,.10) 3px
+    );
+  }
+</style>
+</head>
+<body bgcolor="#FFFFFF" text="#000000" link="#0000EE" vlink="#551A8B">
+
+<center>
+
+<font size="4"><b>SEATTLE WEATHER</b></font><br>
+<font size="1"><a href="/">wagenhoffer.dev</a> &nbsp;|&nbsp;
+<a href="#" id="fslink">[ fullscreen ]</a> &nbsp;|&nbsp;
+<span id="status">offline</span></font>
+
+<div id="rotatemsg">
+<font size="2" color="#CC0000"><marquee scrollamount="4">Rotate your phone for a bigger picture</marquee></font>
+</div>
+
+<div id="tvwrap"><video id="tv" width="640" height="480" playsinline preload="none"></video></div>
+
+<form action="" onsubmit="return false">
+<input type="button" id="tunein" value="&#9658; Play (with sound)">
+</form>
+
+<hr size="1" width="95%">
+
+<font size="1" color="#666666">
+WeatherStar 4000 simulator (<a href="https://github.com/GearUnclear/freestar4k">freestar4k</a>).
+Weather data from the National Weather Service.
+</font>
+
+</center>
+
+<script src="hls.min.js"></script>
+<script type="text/javascript">
+(function () {
+  var SRC = '/weather/hls/index.m3u8';
+  var video = document.getElementById('tv');
+  var btn = document.getElementById('tunein');
+  var status = document.getElementById('status');
+  var fslink = document.getElementById('fslink');
+  var hls = null;
+
+  function onAir(yes) {
+    status.innerHTML = yes ? '<font color="#CC0000"><b>live</b></font>' : 'offline';
+  }
+
+  function start() {
+    btn.style.display = 'none';
+    if (video.canPlayType('application/vnd.apple.mpegurl')) {
+      // Safari and iOS play HLS natively
+      video.src = SRC;
+      video.play().then(function () { onAir(true); }).catch(tuneOut);
+      video.addEventListener('error', tuneOut);
+    } else if (window.Hls && Hls.isSupported()) {
+      hls = new Hls({ liveDurationInfinity: true });
+      hls.loadSource(SRC);
+      hls.attachMedia(video);
+      hls.on(Hls.Events.MANIFEST_PARSED, function () {
+        video.play().then(function () { onAir(true); }).catch(tuneOut);
+      });
+      hls.on(Hls.Events.ERROR, function (_e, data) {
+        if (!data.fatal) return;
+        if (data.type === Hls.ErrorTypes.MEDIA_ERROR) {
+          hls.recoverMediaError();
+        } else {
+          // transmitter hiccup: retry from the top in a few seconds
+          onAir(false);
+          hls.destroy();
+          hls = null;
+          setTimeout(start, 5000);
+        }
+      });
+    } else {
+      tuneOut();
+    }
+  }
+
+  function tuneOut() {
+    onAir(false);
+    btn.style.display = '';
+  }
+
+  btn.onclick = start;
+
+  fslink.onclick = function () {
+    var wrap = document.getElementById('tvwrap');
+    if (wrap.requestFullscreen) {
+      wrap.requestFullscreen(); // wrapper, so the scanlines come along
+    } else if (video.webkitEnterFullscreen) {
+      video.webkitEnterFullscreen(); // iPhone Safari
+    }
+    return false;
+  };
+})();
+</script>
+
+</body>
+</html>

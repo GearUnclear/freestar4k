@@ -1,0 +1,13 @@
+Weather output interrupted; reconnecting
+Traceback (most recent call last):
+  File "/opt/FreeStar/broadcast_encoder.py", line 100, in _run
+    container, video, audio = self._open(url)
+                              ^^^^^^^^^^^^^^^
+  File "/opt/FreeStar/tests/test_broadcast_encoder.py", line 65, in _open
+    raise OSError('Injected unavailable media server')
+OSError: Injected unavailable media server
+.................
+----------------------------------------------------------------------
+Ran 17 tests in 15.363s
+
+OK

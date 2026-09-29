@@ -1,0 +1,7 @@
+{
+  "sample_rate": 44100,
+  "samples_per_channel": 1984512,
+  "rms": 0.1708858609199524,
+  "peak": 0.9796323776245117,
+  "clipped_fraction": 0.0
+}

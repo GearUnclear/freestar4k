@@ -1,0 +1,17 @@
+{
+  "start": "2026-09-29T21:41:17.188Z",
+  "end": "2026-09-29T21:51:31.691000+00:00",
+  "samples": 2458,
+  "stable_window_start": "2026-09-29T21:41:45+00:00",
+  "stable_samples": 2347,
+  "stable_black_samples": 0,
+  "stable_paused_samples": 0,
+  "stable_low_ready_samples": 0,
+  "stable_states": [
+    "live"
+  ],
+  "longest_unchanged_video_interval": 0,
+  "stable_dropped_frames": 11,
+  "stable_total_frames": 17148,
+  "events": 18
+}

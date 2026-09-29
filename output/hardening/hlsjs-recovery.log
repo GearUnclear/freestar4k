@@ -1,0 +1,27 @@
+### Result
+{"before":{"time":1790718369099,"play":56.469634,"source":"blob:https://wagenhoffer.dev/fb5085b9-fb08-40da-9df8-bc65c16a658b","native":""},"samples":[{"time":1790718370102,"play":57.472722,"status":"live"},{"time":1790718371105,"play":58.475571,"status":"live"},{"time":1790718372109,"play":0,"status":"reconnecting"},{"time":1790718373112,"play":0,"status":"reconnecting"},{"time":1790718374114,"play":0,"status":"connecting"},{"time":1790718375117,"play":0,"status":"reconnecting"},{"time":1790718376120,"play":0,"status":"reconnecting"},{"time":1790718377122,"play":0,"status":"reconnecting"},{"time":1790718378124,"play":0,"status":"reconnecting"},{"time":1790718379128,"play":0,"status":"connecting"},{"time":1790718380130,"play":0,"status":"reconnecting"},{"time":1790718381132,"play":0,"status":"reconnecting"},{"time":1790718382135,"play":0,"status":"reconnecting"},{"time":1790718383137,"play":0,"status":"reconnecting"},{"time":1790718384140,"play":0,"status":"reconnecting"},{"time":1790718385144,"play":0,"status":"reconnecting"},{"time":1790718386147,"play":0,"status":"reconnecting"},{"time":1790718387149,"play":0,"status":"reconnecting"},{"time":1790718388152,"play":0,"status":"connecting"},{"time":1790718389154,"play":0,"status":"reconnecting"},{"time":1790718390157,"play":0,"status":"reconnecting"},{"time":1790718391161,"play":0,"status":"reconnecting"},{"time":1790718392163,"play":0,"status":"reconnecting"},{"time":1790718393168,"play":0,"status":"reconnecting"}],"restored":1790718393171,"after":{"time":1790718405609,"play":11.926161,"status":"live","source":"blob:https://wagenhoffer.dev/00a5a597-c723-4b39-8e3f-3642127e3ed6"},"recoverySeconds":12.438}
+### Ran Playwright code
+```js
+await (async (page) => {
+ await page.waitForFunction(()=>document.querySelector("#status").textContent==="live"&&document.querySelector("video").currentTime>2,null,{timeout:40000});
+ const before=await page.evaluate(()=>({time:Date.now(),play:document.querySelector("video").currentTime,source:document.querySelector("video").currentSrc,native:document.querySelector("video").canPlayType("application/vnd.apple.mpegurl")}));
+ if(before.native!==""||!before.source.startsWith("blob:"))throw new Error("Player is not using hls.js");
+ const samples=[];
+ await page.context().setOffline(true);
+ try {for(let i=0;i<24;i++){await page.waitForTimeout(1000);samples.push(await page.evaluate(()=>({time:Date.now(),play:document.querySelector("video").currentTime,status:document.querySelector("#status").textContent})));}}
+ finally {await page.context().setOffline(false);}
+ const restored=Date.now();
+ await page.waitForFunction(()=>document.querySelector("#status").textContent==="live"&&!document.querySelector("video").paused&&document.querySelector("video").readyState>=3,null,{timeout:50000});
+ const first=await page.evaluate(()=>document.querySelector("video").currentTime);await page.waitForTimeout(2000);
+ const after=await page.evaluate(()=>({time:Date.now(),play:document.querySelector("video").currentTime,status:document.querySelector("#status").textContent,source:document.querySelector("video").currentSrc}));
+ if(after.play<=first+.5)throw new Error("Player did not advance after restoring network");
+ await page.locator("video").screenshot({path:"output/playwright/weather-final-20260929/hlsjs-network-recovered.png"});
+ return {before,samples,restored,after,recoverySeconds:(after.time-restored)/1000};
+})(page);
+```
+### Page
+- Page URL: https://wagenhoffer.dev/weather/
+- Page Title: Seattle Weather
+- Console: 9 errors, 0 warnings
+### Events
+- New console entries: output/playwright/weather-watch-20260929/console-2026-09-29T21-41-47-721Z.log#L21-L29
