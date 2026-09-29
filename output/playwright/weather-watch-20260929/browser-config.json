@@ -1,1 +1,0 @@
-{"browser":{"browserName":"chromium","launchOptions":{"channel":"chrome","headless":true,"chromiumSandbox":false},"contextOptions":{"viewport":{"width":1024,"height":900}}},"outputDir":"/opt/FreeStar/output/playwright/weather-watch-20260929"}

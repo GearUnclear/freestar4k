@@ -9,3 +9,6 @@ latestframe.png
 commit.txt
 venv/
 music/
+
+# Generated recordings, screenshots, and verification logs
+/output/
